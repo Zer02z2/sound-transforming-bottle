@@ -66,6 +66,17 @@ function setup() {
 
   });
 
+    // create pause duplicate button
+    playButton = createButton('pause duplicate');
+    playButton.position(0, 90);
+    playButton.mousePressed(() => {
+  
+      soundMode = 0;
+      duplications.pause();
+  
+    });
+  
+
 
   // create an audio in
   mic = new p5.AudioIn();
@@ -90,16 +101,35 @@ function draw() {
 
 }
 
+function smoothIn(s, startTime, interval) {
+
+  let amp;
+  let duration = floor(millis() - startTime);
+  if (duration <= interval) {
+
+    amp = map(duration, 0, interval, 0, 1);
+
+  } else {
+
+    amp = 1;
+
+  }
+
+  s.amp(amp);
+
+}
+
 
 class Duplication {
 
   constructor(s1, s2, s3) {
 
     this.soundList = [s1, s2, s3];
-    this.played = [false, false, false];
+    this.isPlayed = [false, false, false];
     this.cue = [0, 500, 1000];
     this.startCue = 0;
     this.startTime;
+    this.individualTime = [0, 0, 0];
 
   }
 
@@ -107,13 +137,33 @@ class Duplication {
 
     for (let i = 0; i < 3; i ++) {
 
-      if (this.played[i] == false &&
+      if (this.isPlayed[i] == false &&
         millis() - this.startTime >= this.cue[i]) {
 
-        this.soundList[i].play(this.startCue);
-        this.played[i] = true;
+        this.soundList[i].play(0, 1, 0, this.startCue);
+        this.isPlayed[i] = true;
+        this.individualTime[i] = millis();
 
       }
+
+      if (this.soundList[i].isPlaying()) {
+
+        smoothIn(this.soundList[i], this.individualTime[i], 1000);
+
+      }
+    }
+
+  }
+
+  pause() {
+
+    this.startCue = this.soundList[0].currentTime();
+
+    for (let i = 0; i < 3; i ++) {
+
+      this.soundList[i].stop();
+      this.isPlayed[i] = false;
+
     }
 
   }
