@@ -1,5 +1,6 @@
 import "./style.css";
 import p5 from 'p5';
+import 'p5/lib/addons/p5.sound'
 import * as Tone from 'tone'
 
 const sketch = (p) => {
