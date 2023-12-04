@@ -1,4 +1,6 @@
-let mic, recorder, soundFile, soundFile2;
+let mic, recorder, soundFile, soundMode;
+
+let duplications;
 //let modifiedSounds = [];
 
 let state = 0;
@@ -22,7 +24,16 @@ function setup() {
 
     if (recordButton.value === false) {
 
-      recorder.record(soundFile);
+      soundMode = 0;
+      recorder.record(soundFile, null,
+        () => {
+
+          duplications = new Duplication(
+            new p5.SoundFile(soundFile.getBlob()),
+            new p5.SoundFile(soundFile.getBlob()),
+            new p5.SoundFile(soundFile.getBlob()));
+
+        });
       // record(soundFile, [duration], [callback])
       recordButton.value = true;
       recordButton.elt.innerText = 'stop';
@@ -39,43 +50,22 @@ function setup() {
   // create play button
   playButton = createButton('play');
   playButton.position(0, 30);
-  playButton.value = false;
   playButton.mousePressed(() => {
 
-    if (playButton.value === false) {
+    if (soundFile.buffer) soundFile.play();
 
-      if (soundFile.buffer) soundFile.play();
-      playButton.value = true;
-      playButton.elt.innerText = 'pause';
-
-    } else {
-
-      soundFile.pause();
-      playButton.value = false;
-      playButton.elt.innerText = 'play';
-
-    }
   });
 
-  // create duplicate button
-  duplicateButton = createButton('duplicate');
-  duplicateButton.position(0, 60);
-  duplicateButton.mousePressed(() => {
+  // create play duplicate button
+  playButton = createButton('play duplicate');
+  playButton.position(0, 60);
+  playButton.mousePressed(() => {
 
-    soundFile2 = new p5.SoundFile(soundFile.getBlob(),
+    soundMode = 1;
+    duplications.startTime = millis();
 
-      () => {
+  });
 
-        console.log(soundFile);
-        console.log(soundFile2);
-        soundFile2.play();
-
-      }
-
-
-    );
-
-  })
 
   // create an audio in
   mic = new p5.AudioIn();
@@ -86,16 +76,46 @@ function setup() {
 
   soundFile = new p5.SoundFile();
   soundFile.playMode('sustain');
-  soundFile.onended(() => {
-
-    playButton.value = false;
-    playButton.elt.innerText = 'play';
-
-  });
 
 }
 
 function draw() {
 
+  if (soundMode == 1) {
+
+    duplications.play();
+
+  }
+
+
 }
 
+
+class Duplication {
+
+  constructor(s1, s2, s3) {
+
+    this.soundList = [s1, s2, s3];
+    this.played = [false, false, false];
+    this.cue = [0, 500, 1000];
+    this.startCue = 0;
+    this.startTime;
+
+  }
+
+  play() {
+
+    for (let i = 0; i < 3; i ++) {
+
+      if (this.played[i] == false &&
+        millis() - this.startTime >= this.cue[i]) {
+
+        this.soundList[i].play(this.startCue);
+        this.played[i] = true;
+
+      }
+    }
+
+  }
+
+}
