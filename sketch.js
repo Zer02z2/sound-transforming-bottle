@@ -1,5 +1,5 @@
 let mic, recorder, soundFile, soundFile2;
-let modifiedSounds = [];
+//let modifiedSounds = [];
 
 let state = 0;
 
@@ -23,6 +23,7 @@ function setup() {
     if (recordButton.value === false) {
 
       recorder.record(soundFile);
+      // record(soundFile, [duration], [callback])
       recordButton.value = true;
       recordButton.elt.innerText = 'stop';
 
@@ -61,10 +62,18 @@ function setup() {
   duplicateButton.position(0, 60);
   duplicateButton.mousePressed(() => {
 
-    soundFile2 = loadSound(soundFile.getBlob());
-    console.log(soundFile);
-    console.log(soundFile2);
-    if (soundFile2.buffer) soundFile2.play();
+    soundFile2 = new p5.SoundFile(soundFile.getBlob(),
+
+      () => {
+
+        console.log(soundFile);
+        console.log(soundFile2);
+        soundFile2.play();
+
+      }
+
+
+    );
 
   })
 
@@ -90,8 +99,3 @@ function draw() {
 
 }
 
-const splitSound = (s) => {
-
-
-
-}
