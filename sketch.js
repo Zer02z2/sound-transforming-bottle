@@ -2,6 +2,8 @@ let mic, recorder, soundFile;
 
 let state = 0;
 
+let recordButton, playButton;
+
 function setup() {
 
   createCanvas(windowWidth, windowHeight);
@@ -11,6 +13,49 @@ function setup() {
   textAlign(CENTER);
   text('Click to record', width / 2, height / 2);
 
+  // create record button
+  recordButton = createButton('record');
+  recordButton.position(0, 0);
+  recordButton.value = false;
+  recordButton.mousePressed(() => {
+
+    if (recordButton.value === false) {
+
+      recorder.record(soundFile);
+      recordButton.value = true;
+      recordButton.elt.innerText = 'stop';
+
+    } else {
+
+      recorder.stop();
+      recordButton.value = false;
+      recordButton.elt.innerText = 'record';
+
+    }
+  })
+
+  // create play button
+  playButton = createButton('play');
+  playButton.position(0, 30);
+  playButton.value = false;
+  //recordButton.elt.innerText = 'h';
+  playButton.mousePressed(() => {
+
+    if (playButton.value === false) {
+
+      if (soundFile) soundFile.play();
+      playButton.value = true;
+      playButton.elt.innerText = 'pause';
+
+    } else {
+
+      soundFile.pause();
+      playButton.value = false;
+      playButton.elt.innerText = 'play';
+
+    }
+  });
+
   // create an audio in
   mic = new p5.AudioIn();
   mic.start();
@@ -19,34 +64,15 @@ function setup() {
   recorder.setInput(mic);
 
   soundFile = new p5.SoundFile();
+  soundFile.onended(() => {
+
+    playButton.value = false;
+    playButton.elt.innerText = 'play';
+
+  });
 
 }
 
 function draw() {
 
-}
-
-function mousePressed() {
-
-  if (state === 0 && mic.enabled) {
-
-    recorder.record(soundFile);
-    background(0);
-    text('Recording now! Click to stop.', width / 2, height / 2);
-    state ++;
-
-  } else if (state === 1) {
-
-    recorder.stop();
-    background(0);
-    text('Recording stopped. Click to play & save', width / 2, height / 2);
-    state ++;
-
-  } else if (state === 2) {
-
-    soundFile.play();
-    background(0);
-    text('Click to record', width / 2, height / 2);
-    state = 0;
-  }
 }
