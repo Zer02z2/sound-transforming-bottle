@@ -3,6 +3,8 @@
 
 // const int ledPin = 2; // set ledPin to on-board LED
 long previousMillis = 0;
+int lightPin = A6;
+String lastNoti = "";
 // const int buttonPin = 4; // set buttonPin to digital pin 4
 
 BLEService gyroService("19B10010-E8F2-537E-4F6C-D104768A1214");  // create service
@@ -16,7 +18,7 @@ BLEStringCharacteristic gyroCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  //while (!Serial);
   Serial.println("starting");
 
   // pinMode(ledPin, OUTPUT); // use the LED as an output
@@ -74,12 +76,15 @@ void loop() {
 
         previousMillis = currentMillis;
         updateGyroLevel();
+
       }
     }
   }
 }
 
 void updateGyroLevel() {
+
+  int lightLevel = analogRead(lightPin);
 
   float x, y, z;
   if (IMU.accelerationAvailable()) {
@@ -92,8 +97,14 @@ void updateGyroLevel() {
     // y = round((256 * yf + 256) / 2);
     // z = round((256 * zf + 256) / 2);
 
-    String notification = String(x) + "," + String(y) + "," + String(z);
-    gyroCharacteristic.writeValue(notification);
-    Serial.println(notification);
+    String notification = String(x) + "," + String(y) + "," + String(z) + "," + lightLevel;
+    if (lastNoti != notification) {
+
+      gyroCharacteristic.writeValue(notification);
+      lastNoti = notification;
+
+    }
+
+    //Serial.println(notification);
   }
 }
