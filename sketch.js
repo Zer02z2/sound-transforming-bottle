@@ -157,7 +157,7 @@ class Duplication {
 
   pause() {
 
-    this.startCue = this.soundList[0].currentTime();
+    this.startCue = this.soundList[2].currentTime();
 
     for (let i = 0; i < 3; i ++) {
 
