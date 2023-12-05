@@ -1,7 +1,7 @@
 // The serviceUuid must match the serviceUuid of the device you would like to connect
 const serviceUuid = "19B10010-E8F2-537E-4F6C-D104768A1214";
 let myCharacteristic;
-let myValue = 0
+let myValue = "0,0,0";
 let input;
 let myBLE;
 
@@ -38,6 +38,7 @@ function gotCharacteristics(error, characteristics) {
     console.log("characteristics: ", characteristics);
     // Set the first characteristic as myCharacteristic
     myCharacteristic = characteristics[0];
+    console.log(myCharacteristic);
 
     // read the value of the first characteristic
     myBLE.read(myCharacteristic, gotValue);
@@ -48,7 +49,7 @@ function gotValue(error, value) {
     if (error) console.log("error: ", error);
     console.log("value: ", value);
     myValue = value;
-    myBLE.read(myCharacteristic, gotValue);
+    myBLE.read(myCharacteristic, 'string', gotValue);
 }
 
 function writeToBle() {
