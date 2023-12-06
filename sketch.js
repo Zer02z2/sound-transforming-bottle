@@ -7,12 +7,12 @@ let state = 0;
 
 const serviceUuid = "19B10010-E8F2-537E-4F6C-D104768A1214";
 let myCharacteristic;
-let myValue = "1,0,0,500";
+let myValue = "-1,0,0,500";
 let input;
 let myBLE;
 
 let gyroX, lightLevel;
-let lastGyroX = 1;
+let lastGyroX = -1;
 let lastLightLevel = 500;
 
 function setup() {
@@ -115,15 +115,15 @@ function draw() {
   text(gyroX, 150, 200);
   text(lightLevel, 250, 200);
 
-  if (lightLevel > 300) {
+  if (lightLevel > 50) {
 
-    if (gyroX >= 0) {
+    if (gyroX <= 0) {
 
-      if (lastLightLevel <= 300 || lastGyroX < 0) startRecording();
+      if (lastLightLevel <= 50 || lastGyroX > 0) startRecording();
 
-    } else if (gyroX < 0) {
+    } else if (gyroX > 0) {
 
-      if (lastGyroX >= 0) {
+      if (lastGyroX <= 0) {
         
         stopRecording();
         playOriginal();
@@ -131,19 +131,19 @@ function draw() {
       }
     }
     
-  } else if (lightLevel <= 300) {
+  } else if (lightLevel <= 50) {
 
-    if (lastLightLevel > 300) stopRecording();
+    if (lastLightLevel > 50) stopRecording();
 
-    if (gyroX <= 0) {
+    if (gyroX >= 0) {
 
-      if (lastGyroX > 0) {
+      if (lastGyroX < 0) {
 
         playDuplicate();
       }
-    } else if (gyroX > 0) {
+    } else if (gyroX < 0) {
 
-      if (lastGyroX <= 0) pauseDuplicate();
+      if (lastGyroX >= 0) pauseDuplicate();
     }
   }
 
