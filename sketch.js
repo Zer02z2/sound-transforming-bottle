@@ -1,21 +1,21 @@
 let mic, recorder, soundFile, soundMode;
-let isRecording, isPlaying, isLoading;
+let isRecording, isPlaying, isClosed, isEmpty;
 let recordButton, playButton, duplicateButton;
 let currentPlayTime = 0;
 let duplications;
-let soundQueue = [];
+let soundQueue = [ , , ,];
 
 let state = 0;
 let song;
 
 const serviceUuid = "e5cfc525-435a-4458-8940-3e4f267d468f";
 let myCharacteristic;
-let myValue = "-1";
+let myValue = "-1, 20";
 let myBLE;
 
-let gyroX, lightLevel;
+let gyroX, distance;
 let lastGyroX = - 1;
-let lastLightLevel = 500;
+let lastDistance = 20;
 
 function preload() {
 
@@ -34,7 +34,8 @@ function setup() {
 
   myBLE = new p5ble();
 
-  isRecording = isPlaying = isRecording = false;
+  isRecording = isPlaying = isClosed = false;
+  isEmpty = true;
 
   // Create a 'Connect' button
   const connectButton = createButton("Connect");
@@ -111,8 +112,12 @@ function draw() {
 
   let valueArray = split(myValue.toString(), ',');
   if (valueArray[0]) gyroX = valueArray[0];
+  if (valueArray[1]) distance = valueArray[1];
   let threshold = 0;
-  // if (soundQueue.length > 0) threshold = map(soundQueue[0].currentTime(), 0, soundQueue[0].duration(), 0.3, -1);
+  // if (!isEmpty) threshold = map(soundQueue[0].currentTime(), 0, soundQueue[0].duration(), 0.3, -1);
+
+  if (distance < 20 && lastDistance < 20) isClosed = true;
+  else if (distance >= 20 && lastDistance >= 20) isClosed = false;
 
   if (gyroX < threshold) {
 
@@ -122,14 +127,14 @@ function draw() {
 
     if (isPlaying === false) {
 
-      if (soundQueue.length >0 && soundQueue[0].buffer) {
+      if (!isEmpty && soundQueue[0].buffer) {
         soundQueue[0].play();
         isPlaying = true;
       }
     }
   } else {
 
-    if (isRecording === false && soundQueue.length === 0) {
+    if (isRecording === false && isEmpty) {
       startRecording();
     }
 
@@ -151,10 +156,10 @@ function draw() {
       soundQueue[s].rate(1);
 
       console.log(soundQueue[s].duration() - soundQueue[s].currentTime());
-      if (soundQueue[s].duration() - soundQueue[s].currentTime() < 0.1) soundQueue.splice(s, 1);
+      if (soundQueue[s].duration() - soundQueue[s].currentTime() < 0.1) isEmpty = true;
     }
 
-    if (soundQueue.length === 0) isPlaying = false;
+    if (isEmpty) isPlaying = false;
   }
 
 
@@ -163,7 +168,8 @@ function draw() {
   else if (isRecording === true) message = "isRecording";
   else message = "waiting";
   message += ',' + soundQueue.length;
-  text(gyroX, 150, 200);
+  text(gyroX, 150, 100);
+  text(distance, 150, 200);
   text(message, 150, 300);
 
 }
@@ -267,8 +273,9 @@ function startRecording() {
   recorder.record(soundFile, 5,
     () => {
 
-      soundQueue.push(soundFile);
+      soundQueue[0] = soundFile;
       isRecording = false;
+      isEmpty = false;
       // duplications = new Duplication(
       //   new p5.SoundFile(soundFile.getBlob()),
       //   new p5.SoundFile(soundFile.getBlob()),
@@ -305,4 +312,12 @@ function pauseDuplicate() {
   soundMode = 0;
   duplications.pause();
 
+}
+
+function playSounds() {
+
+  if (soundMode === 0) {
+
+
+  }
 }
