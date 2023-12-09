@@ -1,20 +1,13 @@
 #include <ArduinoBLE.h>
 #include <Arduino_LSM6DS3.h>
 
-// const int ledPin = 2; // set ledPin to on-board LED
 long previousMillis = 0;
-int lightPin = A6;
 String lastNoti = "";
-// const int buttonPin = 4; // set buttonPin to digital pin 4
 
-BLEService gyroService("19B10010-E8F2-537E-4F6C-D104768A1214");  // create service
+BLEService gyroService("e5cfc525-435a-4458-8940-3e4f267d468f");  // create service
 
 // create switch characteristic and allow remote device to read and write
-// BLEByteCharacteristic ledCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite);
-BLEStringCharacteristic gyroCharacteristic("19B10011-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify, 20);
-
-// create button characteristic and allow remote device to get notifications
-// BLEByteCharacteristic buttonCharacteristic("19B10012-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify);
+BLEStringCharacteristic gyroCharacteristic("e5cfc525-435a-4458-8940-3e4f267d468f", BLERead | BLENotify, 20);
 
 void setup() {
   Serial.begin(9600);
@@ -50,7 +43,7 @@ void setup() {
   // add the service
   BLE.addService(gyroService);
 
-  gyroCharacteristic.writeValue("0,0,0");
+  gyroCharacteristic.writeValue("0");
 
   // buttonCharacteristic.writeValue(0);
 
@@ -84,27 +77,17 @@ void loop() {
 
 void updateGyroLevel() {
 
-  int lightLevel = analogRead(lightPin);
-
   float x, y, z;
   if (IMU.accelerationAvailable()) {
 
-    // float xf, yf, zf;
-
     IMU.readAcceleration(x, y, z);
 
-    // x = round((256 * xf + 256) / 2);
-    // y = round((256 * yf + 256) / 2);
-    // z = round((256 * zf + 256) / 2);
-
-    String notification = String(x) + "," + String(y) + "," + String(z) + "," + lightLevel;
+    String notification = String(x);
     if (lastNoti != notification) {
 
       gyroCharacteristic.writeValue(notification);
       lastNoti = notification;
 
     }
-
-    //Serial.println(notification);
   }
 }

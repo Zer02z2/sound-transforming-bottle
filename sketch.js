@@ -1,19 +1,28 @@
 let mic, recorder, soundFile, soundMode;
+let isRecording, isPlaying, isLoading;
 let recordButton, playButton, duplicateButton;
+let currentPlayTime = 0;
 let duplications;
-//let modifiedSounds = [];
+let soundQueue = [];
 
 let state = 0;
+let song;
 
-const serviceUuid = "19B10010-E8F2-537E-4F6C-D104768A1214";
+const serviceUuid = "e5cfc525-435a-4458-8940-3e4f267d468f";
 let myCharacteristic;
-let myValue = "-1,0,0,500";
-let input;
+let myValue = "-1";
 let myBLE;
 
 let gyroX, lightLevel;
-let lastGyroX = -1;
+let lastGyroX = - 1;
 let lastLightLevel = 500;
+
+function preload() {
+
+  song = loadSound('Around_the_world.mp3')
+  // soundQueue.push(song);
+
+}
 
 function setup() {
 
@@ -25,16 +34,11 @@ function setup() {
 
   myBLE = new p5ble();
 
+  isRecording = isPlaying = isRecording = false;
+
   // Create a 'Connect' button
   const connectButton = createButton("Connect");
   connectButton.mousePressed(connectToBle);
-
-  // Create a text input
-  input = createInput();
-
-  // Create a 'Write' button
-  const writeButton = createButton("Write");
-  writeButton.mousePressed(writeToBle);
 
   // create record button
   recordButton = createButton('record');
@@ -104,58 +108,63 @@ function setup() {
 function draw() {
 
   background(200);
-  fill(0);
-  textSize(30);
 
   let valueArray = split(myValue.toString(), ',');
   if (valueArray[0]) gyroX = valueArray[0];
-  if (valueArray[3]) lightLevel = valueArray[3];
+  let threshold = 0;
+  // if (soundQueue.length > 0) threshold = map(soundQueue[0].currentTime(), 0, soundQueue[0].duration(), 0.3, -1);
+
+  if (gyroX < threshold) {
+
+    if (isRecording === true) {
+      stopRecording();
+    }
+
+    if (isPlaying === false) {
+
+      if (soundQueue.length >0 && soundQueue[0].buffer) {
+        soundQueue[0].play();
+        isPlaying = true;
+      }
+    }
+  } else {
+
+    if (isRecording === false && soundQueue.length === 0) {
+      startRecording();
+    }
+
+    if (isPlaying === true) {
+      soundQueue[0].pause();
+      isPlaying = false;
+    }
+  }
+
+  if (isPlaying) {
+
+    let volume = map(gyroX, threshold, -1, 0, 50);
+    let speed = map(gyroX, threshold, -1, 0.2, 5);
+    speed = constrain(speed, 0.2, 5);
+
+    for (let s = soundQueue.length - 1; s >= 0; s--) {
+
+      soundQueue[s].setVolume(10);
+      soundQueue[s].rate(1);
+
+      console.log(soundQueue[s].duration() - soundQueue[s].currentTime());
+      if (soundQueue[s].duration() - soundQueue[s].currentTime() < 0.1) soundQueue.splice(s, 1);
+    }
+
+    if (soundQueue.length === 0) isPlaying = false;
+  }
 
 
+  let message;
+  if (isPlaying === true) message = "isPlaying";
+  else if (isRecording === true) message = "isRecording";
+  else message = "waiting";
+  message += ',' + soundQueue.length;
   text(gyroX, 150, 200);
-  text(lightLevel, 250, 200);
-
-  if (lightLevel > 50) {
-
-    if (gyroX <= 0) {
-
-      if (lastLightLevel <= 50 || lastGyroX > 0) startRecording();
-
-    } else if (gyroX > 0) {
-
-      if (lastGyroX <= 0) {
-        
-        stopRecording();
-        playOriginal();
-
-      }
-    }
-    
-  } else if (lightLevel <= 50) {
-
-    if (lastLightLevel > 50) stopRecording();
-
-    if (gyroX >= 0) {
-
-      if (lastGyroX < 0) {
-
-        playDuplicate();
-      }
-    } else if (gyroX < 0) {
-
-      if (lastGyroX >= 0) pauseDuplicate();
-    }
-  }
-
-  lastGyroX = gyroX;
-  lastLightLevel = lightLevel;
-
-  if (soundMode == 1) {
-
-    duplications.play();
-
-  }
-
+  text(message, 150, 300);
 
 }
 
@@ -235,10 +244,10 @@ function connectToBle() {
 
 function gotCharacteristics(error, characteristics) {
   if (error) console.log("error: ", error);
-  console.log("characteristics: ", characteristics);
+  // console.log("characteristics: ", characteristics);
   // Set the first characteristic as myCharacteristic
   myCharacteristic = characteristics[0];
-  console.log(myCharacteristic);
+  // console.log(myCharacteristic);
 
   // read the value of the first characteristic
   myBLE.read(myCharacteristic, gotValue);
@@ -247,27 +256,23 @@ function gotCharacteristics(error, characteristics) {
 function gotValue(error, value) {
 
   if (error) console.log("error: ", error);
-  console.log("value: ", value);
+  // console.log("value: ", value);
   myValue = value;
   myBLE.read(myCharacteristic, 'string', gotValue);
 }
 
-function writeToBle() {
-  const inputValue = input.value();
-  // Write the value of the input to the myCharacteristic
-  myBLE.write(myCharacteristic, inputValue);
-}
-
 function startRecording() {
 
-  soundMode = 0;
-  recorder.record(soundFile, 10,
+  isRecording = true;
+  recorder.record(soundFile, 5,
     () => {
 
-      duplications = new Duplication(
-        new p5.SoundFile(soundFile.getBlob()),
-        new p5.SoundFile(soundFile.getBlob()),
-        new p5.SoundFile(soundFile.getBlob()));
+      soundQueue.push(soundFile);
+      isRecording = false;
+      // duplications = new Duplication(
+      //   new p5.SoundFile(soundFile.getBlob()),
+      //   new p5.SoundFile(soundFile.getBlob()),
+      //   new p5.SoundFile(soundFile.getBlob()));
 
     });
 }
@@ -279,6 +284,7 @@ function stopRecording() {
 
 function playOriginal() {
 
+  soundFile.amp(100);
   if (soundFile.buffer) soundFile.play();
 }
 
