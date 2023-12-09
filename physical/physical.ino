@@ -1,12 +1,8 @@
 #include <ArduinoBLE.h>
 #include <Arduino_LSM6DS3.h>
-#include <Wire.h>
-#include "Adafruit_VL6180X.h"
 
 long previousMillis = 0;
 String lastNoti = "";
-
-Adafruit_VL6180X vl = Adafruit_VL6180X();
 
 BLEService gyroService("e5cfc525-435a-4458-8940-3e4f267d468f");  // create service
 
@@ -14,7 +10,7 @@ BLEService gyroService("e5cfc525-435a-4458-8940-3e4f267d468f");  // create servi
 BLEStringCharacteristic gyroCharacteristic("e5cfc525-435a-4458-8940-3e4f267d468f", BLERead | BLENotify, 20);
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   //while (!Serial);
   Serial.println("starting");
 
@@ -23,12 +19,6 @@ void setup() {
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
 
-    while (1)
-      ;
-  }
-
-  if (!vl.begin()) {
-    Serial.println("Failed to find sensor");
     while (1)
       ;
   }
@@ -79,6 +69,7 @@ void loop() {
 
         previousMillis = currentMillis;
         updateGyroLevel();
+
       }
     }
   }
@@ -86,31 +77,17 @@ void loop() {
 
 void updateGyroLevel() {
 
-  float lux = vl.readLux(VL6180X_ALS_GAIN_5);
-  float distance;
-
-  uint8_t range = vl.readRange();
-  uint8_t status = vl.readRangeStatus();
-
-  if (status == VL6180X_ERROR_NONE) {
-    distance = range;
-  } else {
-    distance = 10000.0;
-  }
-  Serial.println(distance);
-
   float x, y, z;
   if (IMU.accelerationAvailable()) {
 
     IMU.readAcceleration(x, y, z);
 
-    String notification = String(x) + ',' + String(lux);
+    String notification = String(x);
     if (lastNoti != notification) {
 
       gyroCharacteristic.writeValue(notification);
       lastNoti = notification;
+
     }
   }
-
-  delay(50);
 }
