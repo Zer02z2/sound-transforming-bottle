@@ -3,11 +3,15 @@
 
 long previousMillis = 0;
 String lastNoti = "";
+int recordLed = 2;
+int pourLed = 3;
+int whiteLed = 4;
 
 BLEService gyroService("e5cfc525-435a-4458-8940-3e4f267d468f");  // create service
 
 // create switch characteristic and allow remote device to read and write
 BLEStringCharacteristic gyroCharacteristic("e5cfc525-435a-4458-8940-3e4f267d468f", BLERead | BLENotify, 20);
+BLEStringCharacteristic ledCharacteristic("e5cfc525-435a-4458-8940-3e4f267d468f", BLERead | BLEWrite, 20);
 
 void setup() {
   Serial.begin(9600);
@@ -31,6 +35,11 @@ void setup() {
       ;
   }
 
+  // set the pin modes
+  pinMode(recordLed, OUTPUT);
+  pinMode(pourLed, OUTPUT);
+  pinMode(whiteLed, OUTPUT);
+
   // set the local name peripheral advertises
   BLE.setLocalName("GyroCup");
   // set the UUID for the service this peripheral advertises:
@@ -39,11 +48,13 @@ void setup() {
   // add the characteristics to the service
   // ledService.addCharacteristic(ledCharacteristic);
   gyroService.addCharacteristic(gyroCharacteristic);
+  gyroService.addCharacteristic(ledCharacteristic);
 
   // add the service
   BLE.addService(gyroService);
 
   gyroCharacteristic.writeValue("0");
+  ledCharacteristic.writeValue("isRecording");
 
   // buttonCharacteristic.writeValue(0);
 
@@ -69,6 +80,7 @@ void loop() {
 
         previousMillis = currentMillis;
         updateGyroLevel();
+        updateLED();
 
       }
     }
@@ -89,5 +101,33 @@ void updateGyroLevel() {
       lastNoti = notification;
 
     }
+  }
+}
+
+void updateLED() {
+
+  if (ledCharacteristic.written()){
+
+    String value = ledCharacteristic.value();
+    Serial.println(value);
+    if (value == "green") {
+
+      digitalWrite(recordLed, HIGH);
+      digitalWrite(pourLed, LOW);
+      digitalWrite(whiteLed, LOW);
+
+    } else if (value == "red") {
+
+      digitalWrite(recordLed, LOW);
+      digitalWrite(pourLed, HIGH);
+      digitalWrite(whiteLed, LOW);
+
+    } else {
+
+      digitalWrite(recordLed, LOW);
+      digitalWrite(pourLed, LOW);
+      digitalWrite(whiteLed, LOW);
+    }
+
   }
 }

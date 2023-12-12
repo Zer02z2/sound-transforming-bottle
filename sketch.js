@@ -9,13 +9,16 @@ let state = 0;
 let song;
 
 const serviceUuid = "e5cfc525-435a-4458-8940-3e4f267d468f";
-let myCharacteristic;
+let myCharacteristic, myCharacteristic2;
 let myValue = "-1";
 let myBLE;
 
 let gyroX, lightLevel;
 let lastGyroX = - 1;
 let lastLightLevel = 500;
+let message, lastMessage;
+
+let connected = false;
 
 function preload() {
 
@@ -122,7 +125,7 @@ function draw() {
 
     if (isPlaying === false) {
 
-      if (soundQueue.length >0 && soundQueue[0].buffer) {
+      if (soundQueue.length > 0 && soundQueue[0].buffer) {
         soundQueue[0].play();
         isPlaying = true;
       }
@@ -161,34 +164,23 @@ function draw() {
   }
 
 
-  let message;
-  if (isPlaying === true) message = "isPlaying";
-  else if (isRecording === true) message = "isRecording";
-  else message = "waiting";
-  message += ',' + soundQueue.length;
-  text(gyroX, 150, 200);
-  text(message, 150, 300);
-
-}
-
-function smoothIn(s, startTime, interval) {
-
-  let amp;
-  let duration = floor(millis() - startTime);
-  if (duration <= interval) {
-
-    amp = map(duration, 0, interval, 0, 1);
-
+  if (isPlaying === true) {
+    message = "red";
+  } else if (isRecording === true) {
+    message = "green";
   } else {
-
-    amp = 1;
-
+    message = "red";
   }
 
-  s.amp(amp);
+  if (connected && message != lastMessage) writeToBle(message);
+  
+  lastMessage = message;
+
+  let message3 = message + ',' + soundQueue.length;
+  text(gyroX, 150, 200);
+  text(message3, 150, 300);
 
 }
-
 
 class Duplication {
 
@@ -246,11 +238,12 @@ function connectToBle() {
 }
 
 function gotCharacteristics(error, characteristics) {
+  connected = true;
   if (error) console.log("error: ", error);
   // console.log("characteristics: ", characteristics);
   // Set the first characteristic as myCharacteristic
   myCharacteristic = characteristics[0];
-  // console.log(myCharacteristic);
+  myCharacteristic2 = characteristics[1];
 
   // read the value of the first characteristic
   myBLE.read(myCharacteristic, gotValue);
@@ -262,6 +255,12 @@ function gotValue(error, value) {
   // console.log("value: ", value);
   myValue = value;
   myBLE.read(myCharacteristic, 'string', gotValue);
+}
+
+function writeToBle(message) {
+  const inputValue = message;
+  // Write the value of the input to the myCharacteristic
+  myBLE.write(myCharacteristic2, inputValue);
 }
 
 function startRecording() {
