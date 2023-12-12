@@ -1,5 +1,10 @@
 #include <ArduinoBLE.h>
 #include <Arduino_LSM6DS3.h>
+#include <Wire.h>
+#include "Adafruit_VL6180X.h"
+
+
+Adafruit_VL6180X vl = Adafruit_VL6180X();
 
 long previousMillis = 0;
 String lastNoti = "";
@@ -14,7 +19,7 @@ BLEStringCharacteristic gyroCharacteristic("e5cfc525-435a-4458-8940-3e4f267d468f
 BLEStringCharacteristic ledCharacteristic("e5cfc525-435a-4458-8940-3e4f267d468f", BLERead | BLEWrite, 20);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   //while (!Serial);
   Serial.println("starting");
 
@@ -26,6 +31,12 @@ void setup() {
     while (1)
       ;
   }
+
+  // if (!vl.begin()) {
+  //   Serial.println("Failed to find sensor");
+  //   while (1)
+  //     ;
+  // }
 
   // begin initialization
   if (!BLE.begin()) {
@@ -54,7 +65,7 @@ void setup() {
   BLE.addService(gyroService);
 
   gyroCharacteristic.writeValue("0");
-  ledCharacteristic.writeValue("isRecording");
+  ledCharacteristic.writeValue("green");
 
   // buttonCharacteristic.writeValue(0);
 
@@ -81,7 +92,6 @@ void loop() {
         previousMillis = currentMillis;
         updateGyroLevel();
         updateLED();
-
       }
     }
   }
@@ -89,24 +99,26 @@ void loop() {
 
 void updateGyroLevel() {
 
+  // float lux = vl.readLux(VL6180X_ALS_GAIN_5);
+
   float x, y, z;
   if (IMU.accelerationAvailable()) {
 
     IMU.readAcceleration(x, y, z);
 
     String notification = String(x);
+    // + ',' + String(lux);
     if (lastNoti != notification) {
 
       gyroCharacteristic.writeValue(notification);
       lastNoti = notification;
-
     }
   }
 }
 
 void updateLED() {
 
-  if (ledCharacteristic.written()){
+  if (ledCharacteristic.written()) {
 
     String value = ledCharacteristic.value();
     Serial.println(value);
@@ -128,6 +140,5 @@ void updateLED() {
       digitalWrite(pourLed, LOW);
       digitalWrite(whiteLed, LOW);
     }
-
   }
 }

@@ -114,7 +114,7 @@ function draw() {
 
   let valueArray = split(myValue.toString(), ',');
   if (valueArray[0]) gyroX = valueArray[0];
-  let threshold = 0;
+  let threshold = 0.6;
   // if (soundQueue.length > 0) threshold = map(soundQueue[0].currentTime(), 0, soundQueue[0].duration(), 0.3, -1);
 
   if (gyroX < threshold) {
@@ -144,9 +144,9 @@ function draw() {
 
   if (isPlaying) {
 
-    let volume = map(gyroX, threshold, -1, 0, 50);
-    let speed = map(gyroX, threshold, -1, 0.2, 1.2);
-    speed = constrain(speed, 0.2, 1.2);
+    let volume = map(gyroX, threshold, -1, 0, 100);
+    let speed = map(gyroX, threshold, -1, 0.2, 2.0);
+    speed = constrain(speed, 0.2, 2.0);
 
     for (let s = soundQueue.length - 1; s >= 0; s--) {
 
@@ -173,7 +173,7 @@ function draw() {
   }
 
   if (connected && message != lastMessage) writeToBle(message);
-  
+
   lastMessage = message;
 
   let message3 = message + ',' + soundQueue.length;
@@ -240,10 +240,16 @@ function connectToBle() {
 function gotCharacteristics(error, characteristics) {
   connected = true;
   if (error) console.log("error: ", error);
-  // console.log("characteristics: ", characteristics);
+  console.log("characteristics: ", characteristics);
+  console.log(characteristics[1].properties.notify);
   // Set the first characteristic as myCharacteristic
-  myCharacteristic = characteristics[0];
-  myCharacteristic2 = characteristics[1];
+  if (characteristics[0].properties.notify == true) {
+    myCharacteristic = characteristics[0];
+    myCharacteristic2 = characteristics[1];
+  } else {
+    myCharacteristic = characteristics[1];
+    myCharacteristic2 = characteristics[0];
+  }
 
   // read the value of the first characteristic
   myBLE.read(myCharacteristic, gotValue);
@@ -266,7 +272,7 @@ function writeToBle(message) {
 function startRecording() {
 
   isRecording = true;
-  recorder.record(soundFile, 5,
+  recorder.record(soundFile, 10,
     () => {
 
       soundQueue.push(soundFile);
