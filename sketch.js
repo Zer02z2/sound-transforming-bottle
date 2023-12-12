@@ -142,16 +142,19 @@ function draw() {
   if (isPlaying) {
 
     let volume = map(gyroX, threshold, -1, 0, 50);
-    let speed = map(gyroX, threshold, -1, 0.2, 5);
-    speed = constrain(speed, 0.2, 5);
+    let speed = map(gyroX, threshold, -1, 0.2, 1.2);
+    speed = constrain(speed, 0.2, 1.2);
 
     for (let s = soundQueue.length - 1; s >= 0; s--) {
 
-      soundQueue[s].setVolume(10);
-      soundQueue[s].rate(1);
+      soundQueue[s].setVolume(volume);
+      soundQueue[s].rate(speed);
 
-      console.log(soundQueue[s].duration() - soundQueue[s].currentTime());
-      if (soundQueue[s].duration() - soundQueue[s].currentTime() < 0.1) soundQueue.splice(s, 1);
+      // console.log(soundQueue[s].duration() - soundQueue[s].currentTime());
+      // if (soundQueue[s].duration() - soundQueue[s].currentTime() < 0.1) soundQueue.splice(s, 1);
+      soundQueue[s].onended(() => {
+        soundQueue.splice(s, 1);
+      })
     }
 
     if (soundQueue.length === 0) isPlaying = false;
