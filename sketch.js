@@ -145,12 +145,16 @@ function draw() {
   if (isPlaying) {
 
     let volume = map(gyroX, threshold, -1, 0, 100);
+    let volumeFactor = 1;
     let speed = map(gyroX, threshold, -1, 0.2, 2.0);
     speed = constrain(speed, 0.2, 2.0);
 
     for (let s = soundQueue.length - 1; s >= 0; s--) {
 
-      soundQueue[s].setVolume(volume);
+      if (soundQueue[s].currentTime() / soundQueue[s].duration() > 0.4) {
+        volumeFactor = map(soundQueue[s].currentTime() / soundQueue[s].duration(), 0.4, 1, 1, 0);
+      }
+      soundQueue[s].setVolume(volume * volumeFactor);
       soundQueue[s].rate(speed);
 
       // console.log(soundQueue[s].duration() - soundQueue[s].currentTime());
