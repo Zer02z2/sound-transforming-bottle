@@ -1,5 +1,5 @@
 let mic, recorder, soundFile, soundMode;
-let isRecording, isPlaying, isLoading;
+let isRecording, isPlaying, isLoading, isClosed;
 let recordButton, playButton, duplicateButton;
 let currentPlayTime = 0;
 let duplications;
@@ -10,12 +10,12 @@ let song;
 
 const serviceUuid = "e5cfc525-435a-4458-8940-3e4f267d468f";
 let myCharacteristic, myCharacteristic2;
-let myValue = "-1";
+let myValue = "-1, 1000";
 let myBLE;
 
-let gyroX, lightLevel;
+let gyroX, distance;
 let lastGyroX = - 1;
-let lastLightLevel = 500;
+let lastDistance = 1000;
 let message, lastMessage;
 
 let connected = false;
@@ -37,7 +37,7 @@ function setup() {
 
   myBLE = new p5ble();
 
-  isRecording = isPlaying = isRecording = false;
+  isRecording = isPlaying = isRecording = isClosed = false;
 
   // Create a 'Connect' button
   const connectButton = createButton("Connect");
@@ -114,7 +114,11 @@ function draw() {
 
   let valueArray = split(myValue.toString(), ',');
   if (valueArray[0]) gyroX = valueArray[0];
+  if (valueArray[1]) distance = valueArray[1];
   let threshold = 0.6;
+  if (distance < 50 && lastDistance < 50) isClosed = true;
+  else if (distance >= 50 && lastDistance >= 50) isClosed = false;
+  lastDistance = distance;
   // if (soundQueue.length > 0) threshold = map(soundQueue[0].currentTime(), 0, soundQueue[0].duration(), 0.3, -1);
 
   if (gyroX < threshold) {
@@ -144,7 +148,9 @@ function draw() {
 
   if (isPlaying) {
 
-    let volume = map(gyroX, threshold, -1, 0, 100);
+    if (isClosed == false) {
+
+      let volume = map(gyroX, threshold, -1, 0, 100);
     let volumeFactor = 1;
     let speed = map(gyroX, threshold, -1, 0.2, 2.0);
     speed = constrain(speed, 0.2, 2.0);
@@ -165,6 +171,11 @@ function draw() {
     }
 
     if (soundQueue.length === 0) isPlaying = false;
+
+    } else {
+      duplications.play();
+    }
+
   }
 
 
@@ -182,6 +193,7 @@ function draw() {
 
   let message3 = message + ',' + soundQueue.length;
   text(gyroX, 150, 200);
+  text(distance, 300, 200);
   text(message3, 150, 300);
 
 }
@@ -281,10 +293,10 @@ function startRecording() {
 
       soundQueue.push(soundFile);
       isRecording = false;
-      // duplications = new Duplication(
-      //   new p5.SoundFile(soundFile.getBlob()),
-      //   new p5.SoundFile(soundFile.getBlob()),
-      //   new p5.SoundFile(soundFile.getBlob()));
+      duplications = new Duplication(
+        new p5.SoundFile(soundFile.getBlob()),
+        new p5.SoundFile(soundFile.getBlob()),
+        new p5.SoundFile(soundFile.getBlob()));
 
     });
 }

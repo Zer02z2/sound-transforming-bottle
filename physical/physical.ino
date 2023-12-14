@@ -20,7 +20,7 @@ BLEStringCharacteristic ledCharacteristic("e5cfc525-435a-4458-8940-3e4f267d468f"
 
 void setup() {
   Serial.begin(115200);
-  //while (!Serial);
+  // while (!Serial);
   Serial.println("starting");
 
   // pinMode(ledPin, OUTPUT); // use the LED as an output
@@ -32,11 +32,11 @@ void setup() {
       ;
   }
 
-  // if (!vl.begin()) {
-  //   Serial.println("Failed to find sensor");
-  //   while (1)
-  //     ;
-  // }
+  if (!vl.begin()) {
+    Serial.println("Failed to find sensor");
+     while (1)
+      ;
+  }
 
   // begin initialization
   if (!BLE.begin()) {
@@ -78,6 +78,8 @@ void setup() {
 void loop() {
 
   BLEDevice central = BLE.central();
+  // float lux = vl.readLux(VL6180X_ALS_GAIN_5);
+  // Serial.println(lux);
 
   if (central) {
 
@@ -99,14 +101,15 @@ void loop() {
 
 void updateGyroLevel() {
 
-  // float lux = vl.readLux(VL6180X_ALS_GAIN_5);
+  float lux = vl.readLux(VL6180X_ALS_GAIN_5);
+
 
   float x, y, z;
   if (IMU.accelerationAvailable()) {
 
     IMU.readAcceleration(x, y, z);
 
-    String notification = String(x);
+    String notification = String(x) + ',' + String(lux);
     // + ',' + String(lux);
     if (lastNoti != notification) {
 
