@@ -146,16 +146,21 @@ function draw() {
 
     let volume = map(gyroX, threshold, -1, 0, 100);
     let volumeFactor = 1;
-    let speed = map(gyroX, threshold, -1, 0.2, 2.0);
-    speed = constrain(speed, 0.2, 2.0);
+    let speed;
+    if (gyroX > - 0.8) speed = map(gyroX, threshold, -1, 0.2, 2.0);
+    else speed = map(gyroX, -0.8, -1, 2.0, 10.0)
+    speed = constrain(speed, 0.2, 10.0);
 
     for (let s = soundQueue.length - 1; s >= 0; s--) {
 
-      if (soundQueue[s].currentTime() / soundQueue[s].duration() > 0.4) {
-        volumeFactor = map(soundQueue[s].currentTime() / soundQueue[s].duration(), 0.4, 1, 1, 0);
+      if (soundQueue[s].currentTime() / soundQueue[s].duration() > 0.7) {
+        volumeFactor = map(soundQueue[s].currentTime() / soundQueue[s].duration(), 0.7, 1, 1, 0);
       }
       soundQueue[s].setVolume(volume * volumeFactor);
-      soundQueue[s].rate(speed);
+      let speedNow = speed * volumeFactor;
+      speedNow = constrain(speedNow, 0.2, 10.0);
+      soundQueue[s].rate(speedNow);
+      //console.log(speedNow);
 
       // console.log(soundQueue[s].duration() - soundQueue[s].currentTime());
       // if (soundQueue[s].duration() - soundQueue[s].currentTime() < 0.1) soundQueue.splice(s, 1);
@@ -276,7 +281,7 @@ function writeToBle(message) {
 function startRecording() {
 
   isRecording = true;
-  recorder.record(soundFile, 10,
+  recorder.record(soundFile, 20,
     () => {
 
       soundQueue.push(soundFile);
