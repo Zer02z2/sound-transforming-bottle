@@ -137,7 +137,8 @@ function draw() {
     }
 
     if (isPlaying === true) {
-      soundQueue[0].pause();
+      soundQueue[0].stop();
+      soundQueue = [];
       isPlaying = false;
     }
   }
